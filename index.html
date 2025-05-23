@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>SynapNote</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="toolbar">
+    <button id="add-node">ノード追加</button>
+    <button id="export-png">PNG保存</button>
+    <button id="export-json">JSON保存</button>
+    <input type="file" id="import-json" accept=".json" style="display:none">
+    <button id="import-trigger">JSON読み込み</button>
+<button id="how-to-use-btn">📍機能説明</button>
+
+
+    <div id="size-selectors">
+      ノードサイズ：
+<button class="size-btn" data-size="small">小</button>
+<button class="size-btn selected" data-size="medium">中</button>
+<button class="size-btn" data-size="large">大</button>
+
+
+    <div id="arrow-selectors">
+      線の矢印：
+      <button class="arrow-btn selected" data-arrow="none">なし</button>
+      <button class="arrow-btn" data-arrow="end">→</button>
+      <button class="arrow-btn" data-arrow="both">⇄</button>
+    </div>
+
+<div id="font-controls">
+  フォントサイズ：
+  <button class="font-size-btn" data-font="small">小</button>
+  <button class="font-size-btn selected" data-font="medium">中</button>
+  <button class="font-size-btn" data-font="large">大</button>
+  <button id="toggle-bold">太字切替</button>
+</div>
+
+
+    <div id="color-selectors">
+      <div class="palette">
+        ノード色：
+        <span class="color-choice node-color" data-color="#ffec99" style="background:#ffec99;"></span>
+        <span class="color-choice node-color" data-color="#b5ead7" style="background:#b5ead7;"></span>
+        <span class="color-choice node-color" data-color="#9fa8da" style="background:#9fa8da;"></span>
+        <span class="color-choice node-color" data-color="#ffcccb" style="background:#ffcccb;"></span>
+        <span class="color-choice node-color" data-color="#f4b400" style="background:#f4b400;"></span>
+      </div>
+
+      <div class="palette">
+        線の色：
+        <span class="color-choice line-color" data-color="#000000" style="background:#000000;"></span>
+        <span class="color-choice line-color" data-color="#ff5252" style="background:#ff5252;"></span>
+        <span class="color-choice line-color" data-color="#4caf50" style="background:#4caf50;"></span>
+        <span class="color-choice line-color" data-color="#2196f3" style="background:#2196f3;"></span>
+        <span class="color-choice line-color" data-color="#9c27b0" style="background:#9c27b0;"></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="copyright">©Reina Hamasaki / The logo for this application was created using ChatGPT.</div>
+
+
+  <svg id="mindmap-canvas" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <marker id="arrow-start" markerWidth="20" markerHeight="20" refX="2" refY="10" orient="auto" markerUnits="userSpaceOnUse">
+        <path d="M18,0 L0,10 L18,20 Z" fill="#000" />
+      </marker>
+      <marker id="arrow-end" markerWidth="20" markerHeight="20" refX="18" refY="10" orient="auto" markerUnits="userSpaceOnUse">
+        <path d="M0,0 L18,10 L0,20 Z" fill="#000" />
+      </marker>
+    </defs>
+  </svg>
+
+<div id="fixed-logo-wrapper">
+  <img id="synapnote-logo" src="image.png" alt="SynapNote Logo">
+</div>
+
+<div id="guide-overlay" style="display: none;">
+  <div class="guide-box" style="top:75px;left:30px; white-space: nowrap; animation-delay:0.1s;">
+  ↑ まずはここから、考えていることを自由に書いてみましょう
+</div>
+
+
+    <div class="guide-box" style="top:160px;left:570px;animation-delay:0.1s;">
+    ← 他の考えと区別したいときは<br>&nbsp;&nbsp;&nbsp;&nbsp;ノードの色やサイズ指定ができます
+  </div>
+
+    <div class="guide-box" style="top:100px;left:980px;animation-delay:0.1s;">
+    ← ノード内の文字を選択して<br>&nbsp;&nbsp;&nbsp;&nbsp;フォントサイズの変更ができます<br>&nbsp;&nbsp;&nbsp;（部分的なサイズ変更は不可）
+  </div>
+
+    <div class="guide-box" style="top:30px;left:490px;animation-delay:0.1s;">
+    ← 完成したら画像で保存してみましょう<br>&nbsp;&nbsp;&nbsp;&nbsp;今の状態を保存し、<br>&nbsp;&nbsp;&nbsp;&nbsp;あとで再開することもできます
+  </div>
+
+<div class="guide-center-text">
+  <strong>SynapNoteは<br>“考えを自由につなぎ、視覚化する” マインドマップアプリです</strong>
+</div>
+
+  <button id="close-guide" style="display: none;">閉じる</button>
+</div>
+
+
+
+
+
+
+<style>
+#intro-overlay {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  backdrop-filter: blur(12px);
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+  color: white;
+  font-family: sans-serif;
+  font-size: 3.6rem;
+  text-align: center;
+  opacity: 1;
+  transition: opacity 1s ease;
+}
+
+.fade-in {
+  opacity: 0;
+  animation: fadeIn 1s forwards;
+}
+
+.fade-out {
+  animation: fadeOut 1s forwards;
+}
+
+
+
+@keyframes fadeIn {
+  to { opacity: 1; }
+}
+@keyframes fadeOut {
+  to { opacity: 0; }
+}
+
+.spinner {
+  border: 4px solid rgba(255,255,255,0.2);
+  border-top: 4px solid #fff;
+  border-radius: 50%;
+  width: 40px; height: 40px;
+  animation: spin 1s linear infinite;
+  margin-top: 20px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#logo {
+  width: 260px;
+  margin-left: 12px;
+  vertical-align: middle;
+}
+
+#welcome-container {
+  transition: opacity 0.8s ease;
+}
+
+#final-message {
+  font-size: 2.4rem;
+  opacity: 0;
+  display: none;
+  transition: opacity 1s ease;
+
+  
+}
+</style>
+
+<div id="intro-overlay">
+  <div id="welcome-container" class="fade-in" style="animation-delay: 0.3s;">
+    <div id="welcome-line">
+      <span id="welcome-text">Welcome to</span>
+      <img id="logo" src="image.png" alt="SynapNote">
+    </div>
+  </div>
+
+  <div class="spinner" id="spinner" style="display: none;"></div>
+
+  <div id="final-message">さあ　始めましょう</div>
+</div>
+
+
+
+<script>
+const welcome = document.getElementById("welcome-container")
+const spinner = document.getElementById("spinner")
+const finalMsg = document.getElementById("final-message")
+
+setTimeout(() => {
+  spinner.style.display = "block"
+  spinner.classList.add("fade-in")
+}, 1500)
+
+setTimeout(() => {
+  welcome.classList.add("fade-out")
+  spinner.classList.add("fade-out")
+
+  setTimeout(() => {
+    welcome.style.display = "none"
+    spinner.style.display = "none"
+
+    finalMsg.style.display = "block"
+    finalMsg.classList.add("fade-in")
+
+    setTimeout(() => {
+      finalMsg.classList.remove("fade-in")
+      finalMsg.classList.add("fade-out")
+
+      setTimeout(() => {
+        finalMsg.style.display = "none"
+        document.getElementById("intro-overlay").classList.add("fade-out")
+
+        setTimeout(() => {
+          document.getElementById("intro-overlay").style.display = "none"
+        }, 500)
+
+      }, 500)
+
+    }, 3000)
+
+  }, 500) 
+
+}, 5000)
+</script>
+
+
+
+<script>
+window.addEventListener("DOMContentLoaded", () => {
+  const howToUseBtn = document.getElementById("how-to-use-btn")
+  const guideOverlay = document.getElementById("guide-overlay")
+  const closeGuide = document.getElementById("close-guide")
+
+  if (howToUseBtn && guideOverlay && closeGuide) {
+    howToUseBtn.addEventListener("click", () => {
+      guideOverlay.style.display = "block"
+      closeGuide.style.display = "block"
+    })
+
+    closeGuide.addEventListener("click", () => {
+      guideOverlay.style.display = "none"
+      closeGuide.style.display = "none"
+    })
+  }
+})
+</script>
+
+
+
+<script src="script.js"></script>
+
+</body>
+</html>
